@@ -51,6 +51,11 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.29'
         // runtime 'org.postgresql:postgresql:9.3-1101-jdbc41'
         test "org.grails:grails-datastore-test-support:1.0.2-grails-2.4"
+        bundle('javax.websocket:javax.websocket-api:1.1') {
+            // This line is necessary for deployment to Tomcat, since
+            // Tomcat comes with its own version of javax.websocket-api.
+            export = false
+        }
     }
 
     plugins {

@@ -1,122 +1,72 @@
-<!DOCTYPE html>
 <html>
-	<head>
-		<meta name="layout" content="main"/>
-		<title>Welcome to Grails</title>
-		<style type="text/css" media="screen">
-			#status {
-				background-color: #eee;
-				border: .2em solid #fff;
-				margin: 2em 2em 1em;
-				padding: 1em;
-				width: 12em;
-				float: left;
-				-moz-box-shadow: 0px 0px 1.25em #ccc;
-				-webkit-box-shadow: 0px 0px 1.25em #ccc;
-				box-shadow: 0px 0px 1.25em #ccc;
-				-moz-border-radius: 0.6em;
-				-webkit-border-radius: 0.6em;
-				border-radius: 0.6em;
-			}
+<head>
+  <meta name="layout" content="main">
+  <title>WebSocket Example</title>
+  <style>
+  #chatroom {
+    padding: 10px;
+  }
 
-			.ie6 #status {
-				display: inline; /* float double margin fix http://www.positioniseverything.net/explorer/doubled-margin.html */
-			}
+  #message {
+    width: 400px;
+    padding: 10px;
+  }
 
-			#status ul {
-				font-size: 0.9em;
-				list-style-type: none;
-				margin-bottom: 0.6em;
-				padding: 0;
-			}
+  #log {
+    width: 400px;
+    height: 400px;
+    border: 1px solid #ddd;
+    overflow: auto;
+    padding: 10px;
+  }
+  </style>
+  <script>
+    $(document).ready(function () {
+      var log = $("#log"),
+          message = $("#message"),
+          sendMessageButton = $("#send-message-button"),
 
-			#status li {
-				line-height: 1.3;
-			}
+      // Create the WebSocket URL link. This URI maps to the URI you specified
+      // in the @ServerEndpoint annotation in ChatroomEndpoint.groovy.
+          webSocketUrl = "${createLink(uri: '/chatroom', absolute: true).replaceFirst(/http/, /ws/)}",
 
-			#status h1 {
-				text-transform: uppercase;
-				font-size: 1.1em;
-				margin: 0 0 0.3em;
-			}
+      // Connect to the WebSocket.
+          socket = new WebSocket(webSocketUrl);
 
-			#page-body {
-				margin: 2em 1em 1.25em 18em;
-			}
+      socket.onopen = function () {
+        log.append("<p>Connected to server. Enter your username.</p>");
+      };
 
-			h2 {
-				margin-top: 1em;
-				margin-bottom: 0.3em;
-				font-size: 1em;
-			}
+      socket.onmessage = function (message) {
+        log.append("<p>" + message.data + "</p>");
+      };
 
-			p {
-				line-height: 1.5;
-				margin: 0.25em 0;
-			}
+      socket.onclose = function () {
+        log.append("<p>Connection to server was lost.</p>");
+      };
 
-			#controller-list ul {
-				list-style-position: inside;
-			}
+      sendMessageButton.on('click', function () {
+        var text = message.val();
+        if ($.trim(text) !== '') {
+          // Send the message and clear the text.
+          socket.send(text);
 
-			#controller-list li {
-				line-height: 1.3;
-				list-style-position: inside;
-				margin: 0.25em 0;
-			}
+          message.val("");
+          message.focus();
+          return;
+        }
+        message.focus();
+      });
+    });
+  </script>
+</head>
 
-			@media screen and (max-width: 480px) {
-				#status {
-					display: none;
-				}
+<body>
+<div id="chatroom">
+  <input type="text" id="message" placeholder="Enter your username first, then chat"><br>
 
-				#page-body {
-					margin: 0 1em 1em;
-				}
-
-				#page-body h1 {
-					margin-top: 0;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<a href="#page-body" class="skip"><g:message code="default.link.skip.label" default="Skip to content&hellip;"/></a>
-		<div id="status" role="complementary">
-			<h1>Application Status</h1>
-			<ul>
-				<li>App version: <g:meta name="app.version"/></li>
-				<li>Grails version: <g:meta name="app.grails.version"/></li>
-				<li>Groovy version: ${GroovySystem.getVersion()}</li>
-				<li>JVM version: ${System.getProperty('java.version')}</li>
-				<li>Reloading active: ${grails.util.Environment.reloadingAgentEnabled}</li>
-				<li>Controllers: ${grailsApplication.controllerClasses.size()}</li>
-				<li>Domains: ${grailsApplication.domainClasses.size()}</li>
-				<li>Services: ${grailsApplication.serviceClasses.size()}</li>
-				<li>Tag Libraries: ${grailsApplication.tagLibClasses.size()}</li>
-			</ul>
-			<h1>Installed Plugins</h1>
-			<ul>
-				<g:each var="plugin" in="${applicationContext.getBean('pluginManager').allPlugins}">
-					<li>${plugin.name} - ${plugin.version}</li>
-				</g:each>
-			</ul>
-		</div>
-		<div id="page-body" role="main">
-			<h1>Welcome to Grails</h1>
-			<p>Congratulations, you have successfully started your first Grails application! At the moment
-			   this is the default page, feel free to modify it to either redirect to a controller or display whatever
-			   content you may choose. Below is a list of controllers that are currently deployed in this application,
-			   click on each to execute its default action:</p>
-
-			<div id="controller-list" role="navigation">
-				<h2>Available Controllers:</h2>
-				<ul>
-					<g:each var="c" in="${grailsApplication.controllerClasses.sort { it.fullName } }">
-						<li class="controller"><g:link controller="${c.logicalPropertyName}">${c.fullName}</g:link></li>
-					</g:each>
-				</ul>
-			</div>
-		</div>
-	</body>
+  <div id="log"></div><br>
+  <button id="send-message-button">Send</button>
+</div>
+</body>
 </html>

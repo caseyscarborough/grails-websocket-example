@@ -1,10 +1,10 @@
 package chatroom
 
 import grails.util.Environment
-import org.apache.catalina.core.ApplicationContext
 import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
+import org.springframework.context.ApplicationContext
 
 import javax.servlet.ServletContext
 import javax.servlet.ServletContextEvent
@@ -36,7 +36,7 @@ class ChatroomEndpoint implements ServletContextListener {
 
       // This is mainly for demonstration of retrieving the ApplicationContext,
       // the GrailsApplication instance, and application configuration.
-      ApplicationContext ctx = servletContext.getAttribute(GrailsApplicationAttributes.APPLICATION_CONTEXT)
+      ApplicationContext ctx = (ApplicationContext) servletContext.getAttribute(GrailsApplicationAttributes.APPLICATION_CONTEXT)
       GrailsApplication grailsApplication = ctx.grailsApplication
       serverContainer.defaultMaxSessionIdleTimeout = grailsApplication.config.servlet.defaultMaxSessionIdleTimeout ?: 0
     } catch (IOException e) {
@@ -71,11 +71,12 @@ class ChatroomEndpoint implements ServletContextListener {
 
     if (!username) {
       userSession.userProperties.put("username", message)
+      sendMessage(String.format("%s has joined the chatroom.", message))
       return
     }
 
     // Send the message to all users in the chatroom.
-    sendMessage(message)
+    sendMessage(message, userSession)
   }
 
   /**
@@ -84,11 +85,12 @@ class ChatroomEndpoint implements ServletContextListener {
   @OnClose
   public void onClose(Session userSession, CloseReason closeReason) {
     String username = userSession.userProperties.get("username")
+    users.remove(userSession)
+    userSession.close()
 
     if (username) {
       sendMessage(String.format("%s has left the chatroom.", username))
     }
-    users.remove(userSession)
   }
 
   @OnError
@@ -100,7 +102,11 @@ class ChatroomEndpoint implements ServletContextListener {
    * Iterate through all chatroom users and send a message to them.
    * @param message
    */
-  private void sendMessage(String message) {
+  private void sendMessage(String message, Session userSession=null) {
+    if (userSession) {
+      message = String.format(
+        "%s: %s", userSession.userProperties.get("username"), message)
+    }
     Iterator<Session> iterator = users.iterator()
     while(iterator.hasNext()) {
       iterator.next().basicRemote.sendText(message)

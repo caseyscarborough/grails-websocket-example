@@ -57,6 +57,12 @@
         }
         message.focus();
       });
+
+      message.keyup(function(e) {
+        if (e.keyCode == 13) {
+          sendMessageButton.trigger('click');
+        }
+      });
     });
   </script>
 </head>
